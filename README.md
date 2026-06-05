@@ -63,6 +63,16 @@ Claude Code 로그인 시 생성되는 OAuth 토큰(`~/.claude/.credentials.json
 - 토큰 상세(JSONL): 5초마다 갱신
 - 리셋 카운트다운: 5초마다 갱신
 
+## 플랫폼 지원
+
+| OS | 상태 |
+|----|------|
+| Windows 10/11 | ✅ 지원 |
+| macOS | ❓ 미테스트 — 기여 환영! |
+| Linux | ❓ 미테스트 — 기여 환영! |
+
+macOS / Linux 포팅에 관심 있으신 분은 [Issues](https://github.com/TIONBARY/token-monitor/issues)에서 논의해 주세요.
+
 ## ⚠️ 주의사항
 
 이 프로그램은 **Anthropic의 비공식 내부 API** (`claude.ai/api/oauth/usage`)를 사용합니다.
