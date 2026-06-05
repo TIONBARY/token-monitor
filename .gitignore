@@ -1,0 +1,12 @@
+# PyInstaller 빌드 결과물
+dist/
+build/
+*.spec
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 사용자 설정 (개인 한도 설정값)
+config.json
