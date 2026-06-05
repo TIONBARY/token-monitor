@@ -27,13 +27,13 @@ Claude Code 사용자를 위한 실시간 토큰 사용량 모니터링 플로�
 
 ## 설치 및 실행
 
-### 배포 버전 (exe)
+### 배포 버전 (exe) — 권장
 
-```
-ClaudeTokenMonitor.exe 실행
-```
+1. [Releases](https://github.com/TIONBARY/token-monitor/releases/latest) 에서 `ClaudeTokenMonitor.exe` 다운로드
+2. 실행
 
 Python이나 별도 설치 없이 바로 실행 가능.
+Windows Defender 경고가 뜨면 **추가 정보 → 실행** 클릭.
 
 ### 소스 실행
 
