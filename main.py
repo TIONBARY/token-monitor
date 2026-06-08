@@ -8,6 +8,13 @@ from pathlib import Path
 
 import requests
 
+try:
+    import pystray
+    from PIL import Image, ImageDraw
+    TRAY_AVAILABLE = True
+except ImportError:
+    TRAY_AVAILABLE = False
+
 CLAUDE_PROJECTS_DIR = Path.home() / ".claude" / "projects"
 CREDENTIALS_FILE    = Path.home() / ".claude" / ".credentials.json"
 CONFIG_FILE         = Path(__file__).parent / "config.json"
@@ -36,6 +43,7 @@ STRINGS = {
         "detail_menu":    "상세 보기",
         "lang_menu":      "언어 설정",
         "quit_menu":      "종료",
+        "tray_toggle":    "바 표시/숨기기",
         "realtime":       "실시간 사용량  (claude.ai 연동)",
         "5h_label":       "5h 세션:",
         "7d_label":       "주간(7d):",
@@ -60,6 +68,7 @@ STRINGS = {
         "detail_menu":    "Details",
         "lang_menu":      "Language",
         "quit_menu":      "Quit",
+        "tray_toggle":    "Show/Hide Bar",
         "realtime":       "Live Usage  (claude.ai)",
         "5h_label":       "5h Session:",
         "7d_label":       "Weekly(7d):",
@@ -342,6 +351,7 @@ class DetailPopup:
         self._api     = api
         self._monitor = monitor
         self._win: tk.Toplevel | None = None
+        self._drag_x = self._drag_y = 0
 
     def toggle(self, near_x=0, near_y=0):
         if self._win and self._win.winfo_exists():
@@ -359,6 +369,16 @@ class DetailPopup:
         self.close()
         self._open(near_x, near_y)
 
+    def _drag_start(self, e):
+        self._drag_x, self._drag_y = e.x, e.y
+
+    def _drag_move(self, e):
+        if not self._win:
+            return
+        x = self._win.winfo_x() + e.x - self._drag_x
+        y = self._win.winfo_y() + e.y - self._drag_y
+        self._win.geometry(f"+{x}+{y}")
+
     def _open(self, near_x, near_y):
         win = tk.Toplevel(self._parent)
         win.overrideredirect(True)
@@ -371,15 +391,19 @@ class DetailPopup:
         outer = tk.Frame(border, bg=BG, padx=16, pady=12)
         outer.pack()
 
-        # 헤더
-        hdr = tk.Frame(outer, bg=BG)
+        # 헤더 (드래그로 창 이동 가능)
+        hdr = tk.Frame(outer, bg=BG, cursor="fleur")
         hdr.pack(fill="x")
-        self._title_lbl = tk.Label(hdr, text="Claude Token Monitor",
+        self._title_lbl = tk.Label(hdr, text="Claude Token Monitor", cursor="fleur",
                                     bg=BG, fg=ACCENT, font=("Segoe UI", 12, "bold"))
         self._title_lbl.pack(side="left")
         tk.Label(hdr, text="✕", bg=BG, fg=MUTED,
                  font=("Segoe UI", 12), cursor="hand2").pack(side="right")
         hdr.winfo_children()[-1].bind("<Button-1>", lambda e: self.close())
+
+        for w in (hdr, self._title_lbl):
+            w.bind("<ButtonPress-1>", self._drag_start)
+            w.bind("<B1-Motion>",     self._drag_move)
 
         tk.Frame(outer, bg=SURFACE, height=1).pack(fill="x", pady=(8, 0))
 
@@ -582,6 +606,7 @@ class FloatingBar:
         self._pinned = True
         self._menu_open = False
         self._bar_frame: tk.Frame | None = None
+        self._tray = None
 
         self._build_ui()
         self._place_default()
@@ -657,7 +682,7 @@ class FloatingBar:
                              fg=ACCENT if self._pinned else MUTED)
 
     def _keep_on_top(self):
-        if self._pinned and not self._menu_open:
+        if self._pinned and not self._menu_open and self.is_visible():
             self.root.attributes("-topmost", True)
             self.root.lift()
         self.root.after(1000, self._keep_on_top)
@@ -681,7 +706,7 @@ class FloatingBar:
         menu.add_command(label=t("detail_menu"), command=self._on_double_click)
         menu.add_command(label=t("lang_menu"),   command=self._open_lang)
         menu.add_separator()
-        menu.add_command(label=t("quit_menu"),   command=self.root.quit)
+        menu.add_command(label=t("quit_menu"),   command=self.quit)
         menu.tk_popup(e.x_root, e.y_root)
 
         # 메뉴가 닫히면 플래그 해제
@@ -697,10 +722,37 @@ class FloatingBar:
 
     def _open_lang(self):
         def on_change():
-            # 언어 변경 시 바 재빌드 + 팝업 닫기
+            # 언어 변경 시 바 재빌드 + 팝업 닫기 + 트레이 메뉴 재빌드
             self._build_ui()
             self._detail.close()
+            if self._tray:
+                self._tray.rebuild_menu()
         LangDialog(self.root, on_change)
+
+    def set_tray(self, tray):
+        self._tray = tray
+
+    def show_detail(self):
+        self._on_double_click()
+
+    def open_lang_dialog(self):
+        self._open_lang()
+
+    def is_visible(self) -> bool:
+        return self.root.state() != "withdrawn"
+
+    def toggle_visibility(self):
+        if self.is_visible():
+            self._detail.close()
+            self.root.withdraw()
+        else:
+            self.root.deiconify()
+            self.root.lift()
+
+    def quit(self):
+        if self._tray:
+            self._tray.stop()
+        self.root.quit()
 
     @staticmethod
     def _draw_float_bar(canvas, pct: float, color: str, W=60, H=10):
@@ -735,6 +787,62 @@ class FloatingBar:
         self.root.mainloop()
 
 
+# ── 시스템 트레이 ───────────────────────────────────────────────────
+
+def _make_tray_image():
+    size = 64
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    draw.ellipse((4, 4, size - 4, size - 4), fill=ACCENT)
+    draw.ellipse((18, 18, size - 18, size - 18), fill=BG)
+    return img
+
+
+class SystemTray:
+    """실행 중임을 트레이 아이콘으로 표시하고, 바 표시/숨기기 및 종료를 제공"""
+
+    def __init__(self, bar: "FloatingBar"):
+        self._bar = bar
+        self._icon = None
+
+    def start(self):
+        if not TRAY_AVAILABLE:
+            return
+        self._icon = pystray.Icon("ClaudeTokenMonitor", _make_tray_image(),
+                                   "Claude Token Monitor", menu=self._build_menu())
+        threading.Thread(target=self._icon.run, daemon=True).start()
+
+    def stop(self):
+        if self._icon:
+            self._icon.stop()
+            self._icon = None
+
+    def rebuild_menu(self):
+        if self._icon:
+            self._icon.menu = self._build_menu()
+
+    def _build_menu(self):
+        return pystray.Menu(
+            pystray.MenuItem(t("detail_menu"), self._on_detail),
+            pystray.MenuItem(t("lang_menu"),   self._on_lang),
+            pystray.MenuItem(t("tray_toggle"), self._on_toggle),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem(t("quit_menu"),   self._on_quit),
+        )
+
+    def _on_detail(self, _icon=None, _item=None):
+        self._bar.root.after(0, self._bar.show_detail)
+
+    def _on_lang(self, _icon=None, _item=None):
+        self._bar.root.after(0, self._bar.open_lang_dialog)
+
+    def _on_toggle(self, _icon=None, _item=None):
+        self._bar.root.after(0, self._bar.toggle_visibility)
+
+    def _on_quit(self, _icon=None, _item=None):
+        self._bar.root.after(0, self._bar.quit)
+
+
 # ── 진입점 ─────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -747,5 +855,8 @@ if __name__ == "__main__":
     api.start()
     monitor.start()
 
-    bar = FloatingBar(api, monitor)
+    bar  = FloatingBar(api, monitor)
+    tray = SystemTray(bar)
+    bar.set_tray(tray)
+    tray.start()
     bar.run()

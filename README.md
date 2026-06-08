@@ -37,8 +37,13 @@ A real-time floating bar that shows your Claude Code token usage at a glance.
 
 ### Pre-built release (exe) — recommended
 
-1. Download `ClaudeTokenMonitor.exe` from the [Releases](https://github.com/TIONBARY/token-monitor/releases/latest) page
-2. Run it
+1. Download `ClaudeTokenMonitor.exe` (and `ClaudeTokenMonitor.exe.sha256`) from the [Releases](https://github.com/TIONBARY/token-monitor/releases/latest) page
+2. *(Optional)* Verify the download hasn't been tampered with:
+   ```powershell
+   Get-FileHash ClaudeTokenMonitor.exe -Algorithm SHA256
+   ```
+   The printed hash should match the value inside `ClaudeTokenMonitor.exe.sha256`. Every release is built and checksummed automatically by [GitHub Actions](.github/workflows/release.yml) directly from this source code.
+3. Run it
 
 No Python or extra installation needed — just run the exe.
 If Windows Defender shows a warning, click **More info → Run anyway**.

@@ -93,9 +93,24 @@ accessToken 만료 시 Claude Code 재실행으로 자동 복구.
 
 ## 빌드
 
+### 로컬 (테스트용)
+
 ```bash
 $pydir = "C:\Users\kse\AppData\Local\Python\pythoncore-3.14-64\Scripts"
 & "$pydir\pyinstaller.exe" --onefile --windowed --name "ClaudeTokenMonitor" --clean main.py
+```
+
+### 릴리즈 (자동화)
+
+`.github/workflows/release.yml` — `v*` 형태의 태그를 push하면 GitHub Actions가:
+1. `windows-latest`에서 PyInstaller로 `ClaudeTokenMonitor.exe` 빌드
+2. SHA256 체크섬(`.sha256`) 생성
+3. exe + 체크섬을 첨부해 GitHub Release 자동 생성 (release notes 자동 생성)
+
+새 버전 배포 시:
+```bash
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 ## 개발 시 주의사항

@@ -37,8 +37,13 @@ Claude Code 사용자를 위한 실시간 토큰 사용량 모니터링 플로�
 
 ### 배포 버전 (exe) — 권장
 
-1. [Releases](https://github.com/TIONBARY/token-monitor/releases/latest) 에서 `ClaudeTokenMonitor.exe` 다운로드
-2. 실행
+1. [Releases](https://github.com/TIONBARY/token-monitor/releases/latest) 에서 `ClaudeTokenMonitor.exe`와 `ClaudeTokenMonitor.exe.sha256` 다운로드
+2. *(선택)* 다운로드한 파일이 변조되지 않았는지 체크섬 검증:
+   ```powershell
+   Get-FileHash ClaudeTokenMonitor.exe -Algorithm SHA256
+   ```
+   출력된 해시값이 `ClaudeTokenMonitor.exe.sha256` 파일 안의 값과 일치하면 정상입니다. 모든 릴리즈는 [GitHub Actions](.github/workflows/release.yml)가 이 저장소의 소스 코드로부터 직접 빌드하고 체크섬을 생성합니다.
+3. 실행
 
 Python이나 별도 설치 없이 바로 실행 가능.
 Windows Defender 경고가 뜨면 **추가 정보 → 실행** 클릭.
