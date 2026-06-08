@@ -10,12 +10,14 @@ Claude Code 사용자의 실시간 토큰 사용량을 Windows 플로팅 바로 
 ```
 D:\dev\token-monitor\
 ├── main.py                  # 메인 소스
-├── requirements.txt         # pystray, Pillow (현재 미사용, tkinter만 사용)
+├── requirements.txt         # pystray, Pillow (시스템 트레이 아이콘에 사용)
 ├── config.json              # 사용자 설정 (lang) — gitignore 대상
 ├── LICENSE                  # MIT 라이선스
 ├── README.md                # 영문 (기본, GitHub 표시 언어)
 ├── README.ko.md             # 한국어
 ├── CLAUDE.md
+├── assets/                  # README용 스크린샷 (bar/detail × ko/en)
+├── .github/workflows/       # release.yml — 태그 push 시 자동 빌드·릴리즈
 └── dist/
     └── ClaudeTokenMonitor.exe  # 배포용 단일 실행파일 (gitignore 대상)
 ```
@@ -54,6 +56,7 @@ D:\dev\token-monitor\
 - Canvas 프로그레스 바 (146px 너비)
 - 5초마다 갱신, 리셋 카운트다운 실시간 표시
 - `reopen()`: 언어 변경 시 팝업 닫기용
+- 헤더(`hdr`, `_title_lbl`)에 `_drag_start`/`_drag_move` 바인딩 → 제목 영역 드래그로 창 이동 가능 (`overrideredirect` 창이라 기본 타이틀바 없음)
 
 ### `FloatingBar`
 - `overrideredirect(True)` + `attributes("-topmost", True)` 플로팅 창
@@ -64,6 +67,19 @@ D:\dev\token-monitor\
 - `_build_ui()`: 언어 변경 시 재호출해 바 텍스트 재생성
 - Canvas 기반 게이지 바 (테두리 + 채움, 60px 너비)
 - 기본 위치: 화면 우하단 (작업표시줄 바로 위)
+- `is_visible()` / `toggle_visibility()`: `withdraw()`/`deiconify()`로 바 숨기기·표시 (트레이에서 호출)
+- `quit()`: 트레이 아이콘 정리 후 `root.quit()` — 우클릭 메뉴/트레이 양쪽에서 이 메서드로 종료
+- `show_detail()` / `open_lang_dialog()`: 트레이 메뉴가 호출하는 공개 래퍼 (`_on_double_click`/`_open_lang` 위임)
+- `set_tray(tray)`: `SystemTray` 인스턴스 주입 (생성 순서상 순환 의존을 피하기 위해 외부에서 연결)
+
+### `SystemTray`
+- `pystray` 기반 시스템 트레이 아이콘 — "실행 중임을 확인할 수 없다"는 문제 해결용으로 추가
+- `_make_tray_image()`: PIL로 ACCENT 색 링 모양 아이콘 생성 (별도 이미지 파일 불필요)
+- 우클릭 메뉴: 상세 보기 / 언어 설정 / 바 표시·숨기기 / 종료
+- `pystray`/`Pillow` 미설치 시 `TRAY_AVAILABLE=False`로 조용히 비활성화 (`start()`가 no-op)
+- daemon 스레드에서 `icon.run()` 실행 (Windows에서는 메인 스레드 강제 아님 — macOS/Linux 포팅 시 주의 필요)
+- `rebuild_menu()`: 언어 변경 시 `LangDialog.on_change`에서 호출해 메뉴 텍스트 갱신
+- ⚠️ 트레이 아이콘 클릭에 `default=True` 토글 액션을 달았더니 더블클릭이 토글을 두 번 호출해 바가 깜빡이는 버그 발생 → `default` 제거하고 우클릭 메뉴 항목으로만 제공
 
 ## 인증 방식
 
