@@ -12,7 +12,9 @@ D:\dev\token-monitor\
 ├── main.py                  # 메인 소스
 ├── requirements.txt         # pystray, Pillow (현재 미사용, tkinter만 사용)
 ├── config.json              # 사용자 설정 (lang) — gitignore 대상
-├── README.md
+├── LICENSE                  # MIT 라이선스
+├── README.md                # 영문 (기본, GitHub 표시 언어)
+├── README.ko.md             # 한국어
 ├── CLAUDE.md
 └── dist/
     └── ClaudeTokenMonitor.exe  # 배포용 단일 실행파일 (gitignore 대상)
