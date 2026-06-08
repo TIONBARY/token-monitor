@@ -24,7 +24,8 @@ A real-time floating bar that shows your Claude Code token usage at a glance.
 - **Color-coded gauge bars** — yellow at 70%+, red at 90%+
 - **Today's token breakdown** — input/output/cache token counts and estimated cost
 - **Always-on-top** — toggle with the pin button (📌)
-- **Drag to move** — freely reposition anywhere on screen
+- **Drag to move** — freely reposition the bar or the detail popup anywhere on screen
+- **System tray icon** — confirms the app is running at a glance; right-click for Details / Language / Show‑Hide Bar / Quit
 - **Multilingual** — switch between Korean and English
 
 ## Requirements
@@ -59,10 +60,15 @@ python main.py
 
 | Action | Effect |
 |--------|--------|
-| Double-click | Open/close the detail popup |
-| Right-click | Menu (Details / Language / Quit) |
-| Drag | Move the bar |
+| Double-click the bar | Open/close the detail popup |
+| Right-click the bar | Menu (Details / Language / Quit) |
+| Drag the bar or the popup's title area | Move the window |
 | Click 📌 | Toggle always-on-top |
+| Right-click the tray icon | Menu (Details / Language / Show‑Hide Bar / Quit) |
+
+### Tray icon
+
+A small icon sits in the system tray to confirm the app is running and to give you control even if the floating bar is hidden behind other windows. Windows often tucks newly added tray icons into the "hidden icons" overflow (the `^` arrow) — drag it out to keep it always visible.
 
 ### Language setting
 
