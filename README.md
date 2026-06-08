@@ -8,9 +8,13 @@ A real-time floating bar that shows your Claude Code token usage at a glance.
 
 ## Screenshot
 
-```
-🤖 Session 36.0% [██████░░░░]  |  Weekly  4.0% [█░░░░░░░░░]  |  $0.0098  📌
-```
+**Floating bar**
+
+![Floating bar](assets/bar_en.png)
+
+**Detail popup** (double-click the bar)
+
+![Detail popup](assets/detail_en.png)
 
 ## Features
 
